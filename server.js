@@ -1,33 +1,46 @@
 const express = require('express');
-const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
 
 const app = express();
+const PORT = 3000;
+ 
+// Serve static files from the root directory
+app.use(express.static(path.join(__dirname, 'public'), {
+    maxAge: '1y', // 1 year in milliseconds
+    etag: false,
+    lastModified: false
+}));
 
-app.get('/pics/Comp1/:imageName', (req, res) => {
-    const { imageName } = req.params;
-    const imagePath = path.join(__dirname, 'pics', 'Comp1', imageName);
 
-    // Check if the file exists
-    fs.access(imagePath, fs.constants.F_OK, (err) => {
+// Endpoint to get all .wav files in angel-wavs directory
+app.get('/api/angel-wavs', (req, res) => {
+    const directoryPath = path.join(__dirname, 'angel-wavs');
+    fs.readdir(directoryPath, (err, files) => {
         if (err) {
-            return res.status(404).send('Image not found');
+            console.error('Unable to scan directory:', err);
+            return res.status(500).send('Unable to scan directory: ' + err);
         }
-
-        // Compress the image without resizing
-        sharp(imagePath)
-            .png({ quality: 70 })  // Adjust the quality (0-100) for PNG
-            .toBuffer()
-            .then(data => {
-                res.type('png').send(data);
-            })
-            .catch(err => {
-                res.status(500).send('Error processing image');
-            });
+        const wavFiles = files.filter(file => path.extname(file) === '.wav');
+        console.log('angel WAV files found:', wavFiles);
+        res.json(wavFiles);
     });
 });
 
-app.listen(3000, () => {
-    console.log('Server is running on http://localhost:3000');
+// Endpoint to get all .wav files in demon-wavs directory
+app.get('/api/demon-wavs', (req, res) => {
+    const directoryPath = path.join(__dirname, 'demon-wavs');
+    fs.readdir(directoryPath, (err, files) => {
+        if (err) {
+            console.error('Unable to scan directory:', err);
+            return res.status(500).send('Unable to scan directory: ' + err);
+        }
+        const wavFiles = files.filter(file => path.extname(file) === '.wav');
+        console.log('demon WAV files found:', wavFiles);
+        res.json(wavFiles);
+    });
+});
+
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
 });

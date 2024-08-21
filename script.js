@@ -56,33 +56,14 @@ async function fetchWavFiles(folderName) {
     }
 }
 
-function preloadAndCompressImage(imageIndex) {
+function preloadImage(imageIndex) {
     return new Promise((resolve, reject) => {
-        const imgSrc = `/pics/Comp1/image${imageIndex}.png`; // Original image path
+        const imgSrc = `/pics/Comp1/image${imageIndex}.png`; // Update path if necessary
         const img = new Image();
 
-        img.onload = () => {
-            // Create a canvas with the original dimensions
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = img.width;
-            canvas.height = img.height;
-
-            // Draw the image on the canvas
-            ctx.drawImage(img, 0, 0, img.width, img.height);
-
-            // Convert the canvas to a compressed data URL with quality adjustment
-            const compressedImgSrc = canvas.toDataURL('image/png', 0.7); // Adjust compression (0-1)
-
-            // Push the compressed image data URL to imageFiles array
-            imageFiles.push(compressedImgSrc);
-            console.log(`Preloaded and compressed image ${imageIndex}: ${compressedImgSrc}`);
-
-            resolve(compressedImgSrc);
-        };
-
-        img.onerror = () => reject(`Failed to load image ${imageIndex}`);
         img.src = imgSrc;
+        img.onload = () => resolve(imgSrc);
+        img.onerror = () => reject(`Failed to load image ${imageIndex}`);
     });
 }
 
@@ -91,17 +72,17 @@ async function preloadImages() {
         console.log('Preloading images...');
 
         for (let i = 0; i < totalFrames; i++) {
-            const imgSrc = await preloadAndCompressImage(i);
+            const imgSrc = await preloadImage(i);
+            imageFiles.push(imgSrc);
             console.log(`Preloaded image ${i}: ${imgSrc}`);
         }
 
-        console.log('All images preloaded and compressed successfully');
+        console.log('All images preloaded successfully');
         checkFilesLoaded(); // Ensure this checks for both WAV and image files
     } catch (error) {
         console.error(error);
     }
 }
-
 
 
 // Check if all required files are loaded
@@ -241,7 +222,7 @@ document.addEventListener('mousemove', (event) => {
         moveCounter++;
 
         if ((frame + 1) < totalFrames) {
-            if (moveCounter % 2 === 0) {
+            if (moveCounter % 5 === 0) {
                 updateFrame(event);
             }
         }
