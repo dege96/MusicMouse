@@ -209,6 +209,7 @@ function updateFrame(event) {
     frame++;
     const imgSrc = imageFiles[frame];
     imgElement.src = imgSrc;
+    console.log(`Updated image source to: ${imgSrc}`);
 }
 
 // Fades in the given object over the given duration
