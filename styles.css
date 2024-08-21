@@ -7,6 +7,23 @@ body {
     background: radial-gradient(circle, #000, #111); /* Space-themed background */
 }
 
+#loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2em;
+    z-index: 1000;
+}
+#main-content {
+    display: none;
+}
 .playcontainer {
     display: flex;
     justify-content: center; /* Horizontally centers the image */

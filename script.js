@@ -1,51 +1,100 @@
 let wavFiles1 = [];
 let wavFiles2 = [];
-let currentWavFiles = []; // To track which WAV files are currently loaded
-let interactionDone = false; // Flag to track if initial interaction has occurred
-let lastPlayTime = 0; // Timestamp of the last sound played
-let MIN_PLAY_INTERVAL = 180; // Minimum interval between sounds in milliseconds
-let lastMouseMoveTime = 0; // Timestamp of the last mouse move event
+let currentWavFiles = [];
+let imageFiles = []; // To track image files
+let interactionDone = false;
+let lastPlayTime = 0;
+let MIN_PLAY_INTERVAL = 180;
+let lastMouseMoveTime = 0;
 
 let frame = 0;
-const totalFrames = 260; // Total number of frames (from 00000 to 00889)
+const totalFrames = 260;
 const imgElement = document.getElementById('animation');
-let moveCounter = 0; // Counter to track mouse moves
+let moveCounter = 0;
 
-// Fade in control panel over 1 second
 const ControlPanel = document.getElementById('control-panel');
 const buttons = document.querySelectorAll('.button');
-
 const angelButton = document.getElementById('angel-button');
 const demonButton = document.getElementById('demon-button');
 
-//set angels button as active
+// Set angels button as active
 angelButton.classList.remove('inactive');
 angelButton.classList.add('active');
-
 demonButton.classList.add('inactive');
 
-// Fetch the wav files from the server
+// Fetch the WAV files from the server
 async function fetchWavFiles(folderName) {
     console.log(`Fetching WAV files from ${folderName}...`);
     try {
         const response = await fetch(`/api/${folderName}`);
+        
         if (!response.ok) {
-            throw new Error('Failed to fetch wav files');
+            throw new Error(`Failed to fetch WAV files from ${folderName}. Status: ${response.status}`);
         }
+        
         const wavFiles = await response.json();
+        
         console.log(`WAV files fetched from ${folderName}:`, wavFiles);
+        
         if (folderName === 'angel-wavs') {
             wavFiles1 = wavFiles;
         } else if (folderName === 'demon-wavs') {
             wavFiles2 = wavFiles;
         }
-        currentWavFiles = wavFiles; // Update currentWavFiles based on folderName
+        
+        currentWavFiles = wavFiles;
+        
         if (wavFiles.length === 0) {
             console.warn(`No WAV files found in ${folderName}.`);
         }
+        
+        checkFilesLoaded(); // Call this to check if all files are loaded
+        
     } catch (error) {
-        console.error('Error fetching wav files:', error);
+        console.error('Error fetching WAV files:', error);
+        // Optionally handle the error further, e.g., show an error message to the user
     }
+}
+
+// Preload PNG images
+function preloadImages() {
+    return new Promise((resolve, reject) => {
+        const imagePromises = [];
+        
+        for (let i = 0; i < totalFrames; i++) {
+            const imgSrc = `/pics/Comp1/image${i}.png`; // Updated path
+            const img = new Image();
+            img.src = imgSrc;
+            imageFiles.push(imgSrc);
+
+            const promise = new Promise((imgResolve, imgReject) => {
+                img.onload = imgResolve;
+                img.onerror = imgReject;
+            });
+
+            imagePromises.push(promise);
+        }
+
+        Promise.all(imagePromises)
+            .then(() => resolve())
+            .catch(error => reject('Failed to preload images: ' + error));
+    });
+}
+
+// Check if all required files are loaded
+function checkFilesLoaded() {
+    if (wavFiles1.length > 0 && imageFiles.length === totalFrames) {
+        hideLoadingScreen();
+    }
+}
+
+// Hide the loading screen and show the main content
+function hideLoadingScreen() {
+    const loadingScreen = document.getElementById('loading-screen');
+    const mainContent = document.getElementById('main-content');
+
+    loadingScreen.style.display = 'none';
+    mainContent.style.display = 'block';
 }
 
 // Create a sparkle effect at the cursor position
@@ -57,7 +106,7 @@ function createSparkle(x, y) {
     sparkle.style.left = `${x - 5}px`;
     sparkle.style.top = `${y - 5}px`;
     sparkle.style.opacity = '1';
-    sparkle.style.position = 'absolute'; // Ensure proper positioning
+    sparkle.style.position = 'absolute';
     sparkle.style.background = 'radial-gradient(circle, #fff, rgba(255, 255, 255, 0))';
 
     const container = document.getElementById('sparkle-container');
@@ -66,16 +115,14 @@ function createSparkle(x, y) {
     }
     container.appendChild(sparkle);
 
-    // Animate sparkle
     setTimeout(() => {
         sparkle.style.opacity = '0';
         sparkle.style.transform = 'scale(2)';
     }, 0);
 
-    // Remove sparkle after animation
     setTimeout(() => {
         sparkle.remove();
-    }, 500); // Adjust to match animation duration
+    }, 500);
 }
 
 // Play a sound from the wav files
@@ -96,7 +143,7 @@ function playSound(x, y) {
         return;
     }
 
-    const sound = currentWavFiles[Math.floor(Math.random() * currentWavFiles.length)]; // Play a random sound
+    const sound = currentWavFiles[Math.floor(Math.random() * currentWavFiles.length)];
     const audioUrl = `/${(angelButton.classList.contains('inactive') ? 'demon-wavs' : 'angel-wavs')}/${encodeURIComponent(sound)}`;
     const audio = new Audio(audioUrl);
 
@@ -106,38 +153,39 @@ function playSound(x, y) {
         console.error('Playback failed:', error);
     });
 
-    lastPlayTime = currentTime; // Update the timestamp of the last sound played
+    lastPlayTime = currentTime;
 }
 
 // Function to update the image source based on mouse position
 function updateFrame(event) {
-    // Calculate the frame based on the horizontal mouse position
     frame++;
-
-    // Construct the image filename
+    if (frame >= totalFrames) frame = 0; // Loop back to the start
     const imgSrc = `pics/Comp1/image${frame}.png`;
-
-    // Update the image source
     imgElement.src = imgSrc;
 }
 
-// Starts the fade-in animation
+// Fades in the given object over the given duration
 function fadeIn(object, fadeInDuration) {
     const startOpacity = parseFloat(window.getComputedStyle(object).opacity);
     const endOpacity = 1;
-    const startTime = Date.now();
 
-    function step() {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.min(elapsed / fadeInDuration, 1);
-        object.style.opacity = startOpacity + (endOpacity - startOpacity) * progress;
+    return new Promise(resolve => {
+        const startTime = Date.now();
 
-        if (progress < 1) {
-            requestAnimationFrame(step);
+        function step() {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / fadeInDuration, 1);
+            object.style.opacity = startOpacity + (endOpacity - startOpacity) * progress;
+
+            if (progress < 1) {
+                requestAnimationFrame(step);
+            } else {
+                resolve();
+            }
         }
-    }
 
-    requestAnimationFrame(step);
+        requestAnimationFrame(step);
+    });
 }
 
 // Update the MIN_PLAY_INTERVAL display
@@ -165,50 +213,42 @@ demonButton.addEventListener('click', () => {
 document.addEventListener('mousemove', (event) => {
     if (interactionDone) {
         const currentTime = Date.now();
-        
-        // Increment the mouse move counter
         moveCounter++;
 
         if (frame + 1 <= totalFrames) {
-            // Update frame only if moveCounter is even
             if (moveCounter % 2 === 0) {
                 updateFrame(event);
             }
         }
 
-        // Create a sparkle at the cursor position
         createSparkle(event.clientX, event.clientY);
 
-        // Calculate MIN_PLAY_INTERVAL based on vertical mouse position
         const windowHeight = window.innerHeight;
         const mouseY = event.clientY;
         MIN_PLAY_INTERVAL = 80 + ((windowHeight - mouseY) / windowHeight) * (380 - 80);
 
-        // Update the display for MIN_PLAY_INTERVAL
         updateIntervalDisplay();
 
-        // Play sound if the time interval has passed
         if (currentTime - lastPlayTime >= MIN_PLAY_INTERVAL) {
             playSound(event.clientX, event.clientY);
         }
-        
+
         lastMouseMoveTime = currentTime;
     }
 });
 
 // Initial user interaction to enable sound playback
-document.addEventListener('click', () => {
+document.addEventListener('click', async () => {
     if (!interactionDone) {
         console.log('User interacted for the first time.');
         interactionDone = true;
-        fetchWavFiles('angel-wavs'); // Fetch files on initial interaction
+
     }
     console.log('User interaction enabled.');
 
-    fadeIn(ControlPanel, 1000)
-
-    // Initialize the MIN_PLAY_INTERVAL display
+    fadeIn(ControlPanel, 1000);
     updateIntervalDisplay();
-
-    requestAnimationFrame(step);
 });
+
+fetchWavFiles('angel-wavs'); // Fetch wavs
+preloadImages(); // Preload images

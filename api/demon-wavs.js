@@ -1,15 +1,11 @@
-const path = require('path');
-const fs = require('fs');
+// /api/angel-wavs.js
 
-module.exports = async (req, res) => {
-    const directoryPath = path.join(process.cwd(), 'public/demon-wavs');
-    try {
-        const files = await fs.promises.readdir(directoryPath);
-        const wavFiles = files.filter(file => path.extname(file) === '.wav');
-        console.log('demon WAV files found:', wavFiles);
-        res.status(200).json(wavFiles);
-    } catch (err) {
-        console.error('Unable to scan directory:', err);
-        res.status(500).send('Unable to scan directory: ' + err);
-    }
-};
+export default async function handler(req, res) {
+    // Example file list for angel-wavs
+    const wavFiles = [
+        'sound1.wav',
+        'sound2.wav',
+        // Add all your WAV filenames here
+    ];
+    res.status(200).json(wavFiles);
+}
