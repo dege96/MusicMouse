@@ -1,5 +1,3 @@
-// script.js
-
 let wavFiles1 = [];
 let wavFiles2 = [];
 let currentWavFiles = []; // To track which WAV files are currently loaded
