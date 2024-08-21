@@ -56,34 +56,78 @@ async function fetchWavFiles(folderName) {
     }
 }
 
-function preloadImage(imageIndex) {
+// Preload PNG images
+function preloadImages() {
     return new Promise((resolve, reject) => {
-        const imgSrc = `/pics/Comp1/image${imageIndex}.png`; // Update path if necessary
-        const img = new Image();
-
-        img.src = imgSrc;
-        img.onload = () => resolve(imgSrc);
-        img.onerror = () => reject(`Failed to load image ${imageIndex}`);
-    });
-}
-
-async function preloadImages() {
-    try {
         console.log('Preloading images...');
 
-        for (let i = 0; i < totalFrames; i++) {
-            const imgSrc = await preloadImage(i);
-            imageFiles.push(imgSrc);
-            console.log(`Preloaded image ${i}: ${imgSrc}`);
+        if (!Array.isArray(imageFiles)) {
+            console.error('imageFiles is not an array');
+            reject('imageFiles is not an array');
+            return;
         }
 
-        console.log('All images preloaded successfully');
-        checkFilesLoaded(); // Ensure this checks for both WAV and image files
-    } catch (error) {
-        console.error(error);
-    }
-}
+        const imagePromises = [];
 
+        for (let i = 0; i < totalFrames; i++) {
+            const imgSrc = `/pics/Comp1/image${i}.png`; // Updated path
+
+            console.log(`Preloading image ${i}: ${imgSrc}`);
+
+            if (typeof imgSrc !== 'string') {
+                console.error('imgSrc is not a string');
+                reject('imgSrc is not a string');
+                return;
+            }
+
+            const img = new Image();
+
+            if (!img) {
+                console.error('Failed to create new Image object');
+                reject('Failed to create new Image object');
+                return;
+            }
+
+            img.src = imgSrc;
+
+            if (!Array.isArray(imageFiles)) {
+                console.error('imageFiles is not an array');
+                reject('imageFiles is not an array');
+                return;
+            }
+
+            imageFiles.push(imgSrc);
+
+            const promise = new Promise((imgResolve, imgReject) => {
+                img.onload = () => {
+                    imgResolve();
+                };
+                img.onerror = () => {
+                    console.error(`Failed to load image ${i}`);
+                    imgReject(`Failed to load image ${i}`);
+                };
+            });
+
+            if (!promise || typeof promise.then !== 'function') {
+                console.error('Failed to create new Promise object');
+                reject('Failed to create new Promise object');
+                return;
+            }
+
+            imagePromises.push(promise);
+        }
+
+        Promise.all(imagePromises)
+            .then(() => {
+                console.log('All images preloaded successfully');
+                resolve();
+            })
+            .catch(error => {
+                console.error(`Failed to preload images: ${error}`);
+                reject(`Failed to preload images: ${error}`);
+            });
+    });
+}
 
 // Check if all required files are loaded
 function checkFilesLoaded() {
@@ -160,15 +204,12 @@ function playSound(x, y) {
     lastPlayTime = currentTime;
 }
 
+// Function to update the image source based on mouse position
 function updateFrame(event) {
-    requestAnimationFrame(() => {
-        frame = (frame + 1) % totalFrames;
-        const imgSrc = imageFiles[frame];
-        imgElement.src = imgSrc;
-        console.log(`Updated image source to: ${imgSrc}`);
-    });
+    frame++;
+    const imgSrc = imageFiles[frame];
+    imgElement.src = imgSrc;
 }
-
 
 // Fades in the given object over the given duration
 function fadeIn(object, fadeInDuration) {
