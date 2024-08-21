@@ -6,7 +6,12 @@ const app = express();
 const PORT = 3000;
  
 // Serve static files from the root directory
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname, 'public'), {
+    maxAge: '1y', // 1 year in milliseconds
+    etag: false,
+    lastModified: false
+}));
+
 
 // Endpoint to get all .wav files in angel-wavs directory
 app.get('/api/angel-wavs', (req, res) => {
