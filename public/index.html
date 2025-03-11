@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whispering Wilds</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div id="loading-screen">Loading</div>
+
+    <!-- Start overlay -->
+    <div id="start-overlay">
+        <div class="start-container">
+            <h1>Whispering Wilds</h1>
+            <p>Click to start your journey</p>
+            <button id="start-button" onclick="document.getElementById('start-overlay').style.display='none'; document.getElementById('main-content').style.display='block'; window.startGame();">Start the Adventure</button>
+        </div>
+    </div>
+
+    <div id="main-content">
+        <!-- Portal element -->
+        <div id="portal"></div>
+        
+        <!-- Game dialog container -->
+        <div id="game-container">
+            <div id="dialog-box">
+                <div id="dialog-text"></div>
+            </div>
+            <div id="choices"></div>
+        </div>
+        
+        <div id="interval-display">Sound: 180 ms</div>
+    </div>
+
+    <script src="/script.js" type="module"></script>
+</body>
+</html>

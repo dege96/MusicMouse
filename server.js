@@ -3,14 +3,15 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const PORT = 3000;
+const PORT = 3001;
 
-// Serve static files from the 'public' directory
+// Serve static files from both root and public directory
 app.use(express.static('public'));
+app.use(express.static('.'));
 
 // Endpoint to get all .wav files in angel-wavs directory
 app.get('/api/angel-wavs', (req, res) => {
-    const directoryPath = path.join(__dirname, 'public/angel-wavs');
+    const directoryPath = path.join(__dirname, 'angel-wavs');
     fs.readdir(directoryPath, (err, files) => {
         if (err) {
             console.error('Unable to scan directory:', err);
